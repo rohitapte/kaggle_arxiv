@@ -1,5 +1,5 @@
 import json
-
+from collections import defaultdict
 DATA_DIR='data/'
 
 def get_all_categories():
@@ -8,11 +8,12 @@ def get_all_categories():
     The categories are as a single item in a list split by spaces
     :return: set of unique categories
     """
-    categories=set()
+    categories=defaultdict(int)
     with open(DATA_DIR+'arxiv-metadata-oai-snapshot.json') as f:
         for line in f:
             data=json.loads(line)
-            categories.update(data['categories'][0].split(' '))
+            for item in data['categories'][0].split(' '):
+                categories[item]+=1
     return categories
 
 def load_metadata():
@@ -37,12 +38,16 @@ def load_citations():
     return citationdict
 
 def load_authors():
+    unique_authors={}
     with open(DATA_DIR+'authors-parsed.json') as f:
         authordict=json.loads(f.read())
+
+
     return authordict
 
 if __name__=='__main__':
     #return_data=load_metadata()
     #rint(len(return_data))
-    citationdict=load_authors()
-    print(len(citationdict))
+    categories=get_all_categories()
+    for category in categories:
+        print(category.split("."))
