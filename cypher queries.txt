@@ -1,0 +1,61 @@
+CREATE INDEX FOR (n:ResearchCategory) ON (n.name);
+CREATE INDEX FOR (n:ResearchPaper) ON (n.title);
+CREATE INDEX FOR (n:ResearchAuthor) ON (n.lastname,n.firstnames,n.suffix)
+
+
+MATCH (n) DETACH DELETE n
+
+MATCH (n:ResearchCategory)
+RETURN count(n) as count
+
+
+MERGE(category: ResearchCategory {name: 'cs.HC'});
+
+
+MATCH (a:ResearchPaper),(b:ResearchCategory)
+WHERE a.id = '0704.0047' AND b.name = 'cs.AI'
+CREATE (a)-[r:RESEARCHCATEGORY]->(b)
+RETURN r
+
+MATCH (a:ResearchPaper),(b:ResearchCategory)
+WHERE a.id = '0704.0047' AND b.name = 'cs.AI'
+CREATE (b)-[r:CONTAINSRESEARCH]->(a)
+RETURN r
+
+MATCH (a:ResearchPaper),(b:ResearchCategory)
+WHERE a.id = '0704.0047' AND b.name = 'cs.NE'
+CREATE (a)-[r:RESEARCHCATEGORY]->(b)
+RETURN r
+
+MATCH (a:ResearchPaper),(b:ResearchCategory)
+WHERE a.id = '0704.0047' AND b.name = 'cs.NE'
+CREATE (b)-[r:CONTAINSRESEARCH]->(a)
+RETURN r
+
+
+
+MATCH (a:ResearchPaper),(b:ResearchCategory)
+WHERE a.id = '0704.0050' AND b.name = 'cs.AI'
+CREATE (a)-[r:RESEARCHCATEGORY]->(b)
+RETURN r
+
+MATCH (a:ResearchPaper),(b:ResearchCategory)
+WHERE a.id = '0704.0050' AND b.name = 'cs.AI'
+CREATE (b)-[r:CONTAINSRESEARCH]->(a)
+RETURN r
+
+MATCH (a:ResearchPaper),(b:ResearchCategory)
+WHERE a.id = '0704.0050' AND b.name = 'cs.NE'
+CREATE (a)-[r:RESEARCHCATEGORY]->(b)
+RETURN r
+
+MATCH (a:ResearchPaper),(b:ResearchCategory)
+WHERE a.id = '0704.0050' AND b.name = 'cs.NE'
+CREATE (b)-[r:CONTAINSRESEARCH]->(a)
+RETURN r
+
+
+
+MATCH (a)-[:CITEDBY]->(b)
+RETURN b, COLLECT(a) as papers
+ORDER BY SIZE(papers) DESC LIMIT 10
