@@ -39,6 +39,15 @@ def add_research_category_relationship(tx,researchPaper):
                "CREATE(b) - [r: CONTAINSRESEARCH]->(a)",
                research_id=researchPaper['id'], category_name=category)
 
+def add_research_citation_relationship(tx,researchPaper,citationPaper):
+    tx.run("MATCH(a: ResearchPaper), (b: ResearchPaper) "
+           "WHERE a.id = $research_id and b.id = $citation_id "
+           "CREATE (a) - [r: CITES]->(b)",
+           research_id=researchPaper['id'], citation_id=citationPaper['id'])
+    tx.run("MATCH(a: ResearchPaper), (b: ResearchPaper) "
+           "WHERE a.id = $research_id and b.id = $citation_id "
+           "CREATE (b) - [r: CITEDBY]->(a)",
+           research_id=researchPaper['id'], citation_id=citationPaper['id'])
 
 def add_all_categories():
     categories=get_all_categories()
@@ -47,25 +56,40 @@ def add_all_categories():
             session.write_transaction(create_category_entry,category)
 
 
-def add_apartial_metadata():
+def populate_graph():
     add_all_categories()
+    metadata = load_metadata()
+    citations=load_citations()
+
+    sub_metadata = {}
+    for key, value in tqdm(metadata.items()):
+        if 'cs.AI' in value['categories']:
+            sub_metadata[key] = value
+    metadata=sub_metadata
+
     authors=load_authors()
-    metadata=[]
-    with open('arxiv-lite.json') as f:
-        for line in f:
-            data=json.loads(line)
-            metadata.append(data)
     with driver.session() as session:
-        for value in metadata:
+        for key,value in tqdm(metadata.items()):
+            #create entry
             session.write_transaction(create_research_entry,value)
+            #create relationship to categories
             session.write_transaction(add_research_category_relationship,value)
+            #create author and relationship to authors
             if value['id'] in authors:
                 author_data=authors[value['id']]
                 for author in author_data:
                     session.write_transaction(create_author_entry,author)
                 session.write_transaction(add_research_author_relationship,value,author_data)
+        #now create citations
+        for key,value in tqdm(metadata.items()):
+            if key in citations:
+                citationlist=citations[key]
+                for item in citationlist:
+                    if key!=item:
+                        if item in metadata:
+                            session.write_transaction(add_research_citation_relationship,value,metadata[item])
+
 
 
 if __name__=='__main__':
-    #add_all_categories()
-    add_apartial_metadata()
+    populate_graph()
