@@ -1,7 +1,6 @@
 from data_utilities import load_authors,load_citations,load_metadata,get_all_categories
 from tqdm import tqdm
 from neo4j import GraphDatabase
-import json
 
 driver = GraphDatabase.driver("neo4j://localhost:7687", auth=("neo4j", "arxiv123"))
 
@@ -23,10 +22,10 @@ def add_research_author_relationship(tx,researchPaper,authorList):
                "WHERE a.id = $research_id AND b.lastname = $lastname and b.firstnames = $firstnames and b.suffix = $suffix "
                "CREATE(a) - [r: WRITTENBY]->(b)",
                research_id=researchPaper['id'], lastname=author[0], firstnames=author[1], suffix=author[2])
-        tx.run("MATCH(a: ResearchPaper), (b:ResearchAuthor) "
-               "WHERE a.id = $research_id AND b.lastname = $lastname and b.firstnames = $firstnames and b.suffix = $suffix "
-               "CREATE(b) - [r: WROTE]->(a)",
-               research_id=researchPaper['id'], lastname=author[0], firstnames=author[1], suffix=author[2])
+#        tx.run("MATCH(a: ResearchPaper), (b:ResearchAuthor) "
+#               "WHERE a.id = $research_id AND b.lastname = $lastname and b.firstnames = $firstnames and b.suffix = $suffix "
+#               "CREATE(b) - [r: WROTE]->(a)",
+#               research_id=researchPaper['id'], lastname=author[0], firstnames=author[1], suffix=author[2])
 
 def add_research_category_relationship(tx,researchPaper):
     for category in researchPaper['categories']:
@@ -34,20 +33,20 @@ def add_research_category_relationship(tx,researchPaper):
                "WHERE a.id = $research_id AND b.name = $category_name "
                "CREATE(a) - [r: RESEARCHCATEGORY]->(b)",
                research_id=researchPaper['id'],category_name=category)
-        tx.run("MATCH(a: ResearchPaper), (b:ResearchCategory) "
-               "WHERE a.id = $research_id AND b.name = $category_name "
-               "CREATE(b) - [r: CONTAINSRESEARCH]->(a)",
-               research_id=researchPaper['id'], category_name=category)
+#        tx.run("MATCH(a: ResearchPaper), (b:ResearchCategory) "
+#               "WHERE a.id = $research_id AND b.name = $category_name "
+#               "CREATE(b) - [r: CONTAINSRESEARCH]->(a)",
+#               research_id=researchPaper['id'], category_name=category)
 
 def add_research_citation_relationship(tx,researchPaper,citationPaper):
     tx.run("MATCH(a: ResearchPaper), (b: ResearchPaper) "
            "WHERE a.id = $research_id and b.id = $citation_id "
            "CREATE (a) - [r: CITES]->(b)",
            research_id=researchPaper['id'], citation_id=citationPaper['id'])
-    tx.run("MATCH(a: ResearchPaper), (b: ResearchPaper) "
-           "WHERE a.id = $research_id and b.id = $citation_id "
-           "CREATE (b) - [r: CITEDBY]->(a)",
-           research_id=researchPaper['id'], citation_id=citationPaper['id'])
+#    tx.run("MATCH(a: ResearchPaper), (b: ResearchPaper) "
+#           "WHERE a.id = $research_id and b.id = $citation_id "
+#           "CREATE (b) - [r: CITEDBY]->(a)",
+#           research_id=researchPaper['id'], citation_id=citationPaper['id'])
 
 def add_all_categories():
     categories=get_all_categories()
@@ -61,11 +60,11 @@ def populate_graph():
     metadata = load_metadata()
     citations=load_citations()
 
-    sub_metadata = {}
-    for key, value in tqdm(metadata.items()):
-        if 'cs.AI' in value['categories']:
-            sub_metadata[key] = value
-    metadata=sub_metadata
+    #sub_metadata = {}
+    #for key, value in tqdm(metadata.items()):
+    #    if 'cs.AI' in value['categories']:
+    #        sub_metadata[key] = value
+    #metadata=sub_metadata
 
     authors=load_authors()
     with driver.session() as session:
