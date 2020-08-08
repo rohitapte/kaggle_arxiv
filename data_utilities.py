@@ -24,12 +24,12 @@ def load_metadata():
             data=json.loads(line)
             if data['id'] not in unique_ids:
                 unique_ids[data['id']]=1
-                newitem={
-                    'id': data['id'],
-                    'title': data['title'],
-                    'categories': data['categories'][0].split(' '),
-                }
-                return_data[data['id']]=newitem
+            newitem={
+                'id': data['id'],
+                'title': data['title'],
+                'categories': data['categories'][0].split(' '),
+            }
+            return_data[data['id']]=newitem
     return return_data
 
 def load_citations():
@@ -46,7 +46,7 @@ def load_authors():
     return authordict
 
 if __name__=='__main__':
-    #return_data=load_metadata()
+    return_data=load_metadata()
     #rint(len(return_data))
     categories=get_all_categories()
     for category in categories:
