@@ -73,40 +73,51 @@ def load_authors():
         authordict=json.loads(f.read())
     return authordict
 
-def print_metadata_diff_for_id(id):
+def print_metadata_diff_for_ids(list_of_ids):
     """
     get all the entries for a specific id
     print them out
     :param id: id for research article
     :return: None
     """
-    found_items=[]
+    found_items=defaultdict(list)
     with open(DATA_DIR + 'arxiv-metadata-oai-snapshot.json') as f:
         for line in f:
             data = json.loads(line)
-            if data['id']==id:
-                found_items.append(data)
+            if data['id'] in list_of_ids:
+                found_items[data['id']].append(data)
     if len(found_items)>0:
-        print("Printing values for id "+id)
-        for key in found_items[0].keys():
-            print(key)
-            currentValue=found_items[0][key]
-            print(currentValue)
-            for item in found_items[1:]:
-                if currentValue!=item[key]:
-                    print(item[key])
-                print(item[key])
-            print("..........................................")
+        for id in list_of_ids:
+            print("Printing values for id "+id)
+            for key in found_items[id][0].keys():
+                mismatch=False
+
+                currentValue=found_items[id][0][key]
+                for item in found_items[id][1:]:
+                    if currentValue!=item[key]:
+                        mismatch=True
+                if mismatch:
+                    print(key)
+                    currentValue = found_items[id][0][key]
+                    print(currentValue)
+                    for item in found_items[id][1:]:
+                        if currentValue != item[key]:
+                            print(item[key])
+                    print("..........................................")
+            print("__________________________________________")
     else:
         print("No items found for id "+id)
 
 
 if __name__=='__main__':
     unique_ids,return_data=load_metadata()
-    i=0
-    for id in unique_ids:
-        if unique_ids[id]>1:
-            i+=1
-            print_metadata_diff_for_id(id)
-            print("__________________________________________")
-            if i>10: break
+    print(len(unique_ids))
+    print(len(return_data))
+    #i=0
+    #find_list=[]
+    #for id in unique_ids:
+    ##    if unique_ids[id]>1:
+    #        i+=1
+    #        find_list.append(id)
+    #        if i>10000:break
+    #print_metadata_diff_for_ids(find_list)
