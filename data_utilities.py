@@ -2,6 +2,24 @@ import json
 from collections import defaultdict
 DATA_DIR='data/'
 
+def parse_id_for_datestring(id):
+    """
+    convert the id to yy, mm and text
+    upto march 2007 format was archive.subject_class/yymmnumber For example math.GT/0309136
+    since april 2007 its YYMM.number
+    :param id: id to parse
+    :return: yymm
+    """
+    location=id.find('/')
+    if location==-1:
+        datestring=id[:4]
+    else:
+        datestring=id[id.find('/')+1:][:4]
+    return datestring
+
+
+
+
 def get_all_categories():
     """
     Identify and return unique categories.
@@ -17,37 +35,80 @@ def get_all_categories():
     return categories
 
 def load_metadata():
+    """
+    loads the arxiv metadata from file. there are duplicate entries if there has been an update.
+    seems like the later entries are more current
+    :return:
+        unique_id_count - count of duplicates
+        return_data - dictionary hashed by id of metadata
+    """
     return_data={}
-    unique_ids={}
+    unique_id_count=defaultdict(int)
     with open(DATA_DIR+'arxiv-metadata-oai-snapshot.json') as f:
         for line in f:
             data=json.loads(line)
-            if data['id'] not in unique_ids:
-                unique_ids[data['id']]=1
+            unique_id_count[data['id']]+=1
             newitem={
                 'id': data['id'],
                 'title': data['title'],
                 'categories': data['categories'][0].split(' '),
             }
             return_data[data['id']]=newitem
-    return return_data
+    return unique_id_count,return_data
 
 def load_citations():
+    """
+    load citations from file
+    :return: dictionary of citations by id
+    """
     with open(DATA_DIR+'internal-citations.json') as f:
         citationdict=json.loads(f.read())
     return citationdict
 
 def load_authors():
+    """
+    load authors from file
+    :return: dictionary of author by id
+    """
     unique_authors={}
     with open(DATA_DIR+'authors-parsed.json') as f:
         authordict=json.loads(f.read())
-
-
     return authordict
 
+def print_metadata_diff_for_id(id):
+    """
+    get all the entries for a specific id
+    print them out
+    :param id: id for research article
+    :return: None
+    """
+    found_items=[]
+    with open(DATA_DIR + 'arxiv-metadata-oai-snapshot.json') as f:
+        for line in f:
+            data = json.loads(line)
+            if data['id']==id:
+                found_items.append(data)
+    if len(found_items)>0:
+        print("Printing values for id "+id)
+        for key in found_items[0].keys():
+            print(key)
+            currentValue=found_items[0][key]
+            print(currentValue)
+            for item in found_items[1:]:
+                if currentValue!=item[key]:
+                    print(item[key])
+                print(item[key])
+            print("..........................................")
+    else:
+        print("No items found for id "+id)
+
+
 if __name__=='__main__':
-    return_data=load_metadata()
-    #rint(len(return_data))
-    categories=get_all_categories()
-    for category in categories:
-        print(category.split("."))
+    unique_ids,return_data=load_metadata()
+    i=0
+    for id in unique_ids:
+        if unique_ids[id]>1:
+            i+=1
+            print_metadata_diff_for_id(id)
+            print("__________________________________________")
+            if i>10: break
