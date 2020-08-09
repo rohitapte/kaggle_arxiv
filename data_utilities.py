@@ -17,9 +17,6 @@ def parse_id_for_datestring(id):
         datestring=id[id.find('/')+1:][:4]
     return datestring
 
-
-
-
 def get_all_categories():
     """
     Identify and return unique categories.
@@ -50,6 +47,7 @@ def load_metadata():
             unique_id_count[data['id']]+=1
             newitem={
                 'id': data['id'],
+                'date': parse_id_for_datestring(data['id']),
                 'title': data['title'],
                 'categories': data['categories'][0].split(' '),
             }
