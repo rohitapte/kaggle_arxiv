@@ -2,7 +2,7 @@ import json
 from collections import defaultdict
 DATA_DIR='data/'
 
-def parse_id_for_datestring(id):
+def parse_id_for_datestring(arxiv_id):
     """
     convert the id to yy, mm and text
     upto march 2007 format was archive.subject_class/yymmnumber For example math.GT/0309136
@@ -10,11 +10,11 @@ def parse_id_for_datestring(id):
     :param id: id to parse
     :return: yymm
     """
-    location=id.find('/')
+    location=arxiv_id.find('/')
     if location==-1:
-        datestring=id[:4]
+        datestring=arxiv_id[:4]
     else:
-        datestring=id[id.find('/')+1:][:4]
+        datestring=arxiv_id[arxiv_id.find('/')+1:][:4]
     return datestring
 
 def get_all_categories():
@@ -87,26 +87,26 @@ def print_metadata_diff_for_ids(list_of_ids):
             if data['id'] in list_of_ids:
                 found_items[data['id']].append(data)
     if len(found_items)>0:
-        for id in list_of_ids:
-            print("Printing values for id "+id)
-            for key in found_items[id][0].keys():
+        for arxiv_id in list_of_ids:
+            print("Printing values for id "+arxiv_id)
+            for key in found_items[arxiv_id][0].keys():
                 mismatch=False
 
-                currentValue=found_items[id][0][key]
-                for item in found_items[id][1:]:
+                currentValue=found_items[arxiv_id][0][key]
+                for item in found_items[arxiv_id][1:]:
                     if currentValue!=item[key]:
                         mismatch=True
                 if mismatch:
                     print(key)
-                    currentValue = found_items[id][0][key]
+                    currentValue = found_items[arxiv_id][0][key]
                     print(currentValue)
-                    for item in found_items[id][1:]:
+                    for item in found_items[arxiv_id][1:]:
                         if currentValue != item[key]:
                             print(item[key])
                     print("..........................................")
             print("__________________________________________")
     else:
-        print("No items found for id "+id)
+        print("No items found for id "+' '.join(item for item in list_of_ids))
 
 
 if __name__=='__main__':
