@@ -15,6 +15,10 @@ def parse_id_for_datestring(arxiv_id):
         datestring=arxiv_id[:4]
     else:
         datestring=arxiv_id[arxiv_id.find('/')+1:][:4]
+    if datestring[0]=='9':
+        datestring='19'+datestring
+    else:
+        datestring='20'+datestring
     return datestring
 
 def get_all_categories():
@@ -61,6 +65,7 @@ def load_citations():
     """
     with open(DATA_DIR+'internal-citations.json') as f:
         citationdict=json.loads(f.read())
+    citationdict.pop('acc-phys/9607002')
     return citationdict
 
 def load_authors():
