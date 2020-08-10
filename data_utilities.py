@@ -68,6 +68,14 @@ def load_citations():
     citationdict.pop('acc-phys/9607002')
     return citationdict
 
+def generate_reverse_citations(citations,metadata):
+    reverse_citation = defaultdict(list)
+    for key, values in citations.items():
+        for citation in values:
+            if citation != key and citation in metadata:
+                reverse_citation[citation].append(key)
+    return reverse_citation
+
 def load_authors():
     """
     load authors from file
