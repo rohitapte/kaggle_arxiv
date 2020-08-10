@@ -29,18 +29,18 @@ def generate_bulk_entry_csvs():
 
     #generate the csvs in the temp directory
     with open('temp/metadata.csv','w',encoding='utf-8') as f:
-        f.write('ID@Date@Title\n')
+        f.write('researchPaperID:ID@Date@Title\n')
         for key,value in metadata.items():
             f.write(value['id']+"@"+value['date']+"@"
                     +re.sub(' +', ' ', value['title'].replace("@","_at_").replace('\n',' '))+'\n')
 
     with open('temp/categories.csv','w',encoding='utf-8') as f:
-        f.write("ID@CategoryName\n")
+        f.write("categoryIdD:ID@CategoryName\n")
         for key,value in categoryDict.items():
             f.write(str(value)+"@"+key+'\n')
 
     with open('temp/authors.csv','w',encoding='utf-8') as f:
-        f.write("ID@LastName@FirstNames@Suffix\n")
+        f.write("authorID:ID@LastName@FirstNames@Suffix\n")
         for key,value in uniqueAuthors.items():
             f.write(str(value)+"@"+key[0]+"@"+key[1]+"@"+key[2]+'\n')
 
