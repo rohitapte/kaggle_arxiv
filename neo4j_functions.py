@@ -2,9 +2,9 @@ from data_utilities import load_authors,load_citations,load_metadata,get_all_cat
 from tqdm import tqdm
 from collections import namedtuple
 import re
-from neo4j import GraphDatabase
+#from neo4j import GraphDatabase
 
-driver = GraphDatabase.driver("neo4j://localhost:7687", auth=("neo4j", "arxiv123"))
+#driver = GraphDatabase.driver("neo4j://localhost:7687", auth=("neo4j", "arxiv123"))
 
 def generate_bulk_entry_csvs():
     categories = get_all_categories()
@@ -28,18 +28,18 @@ def generate_bulk_entry_csvs():
                 uniqueAuthors[authorTuple]=i
 
     #generate the csvs in the temp directory
-    with open('temp/metadata.csv','w',encoding='utf-8') as f:
+    with open('temp/metadata.csv','w') as f:
         f.write('researchPaperID:ID@Date@Title\n')
         for key,value in metadata.items():
             f.write(value['id']+"@"+value['date']+"@"
                     +re.sub(' +', ' ', value['title'].replace("@","_at_").replace('\n',' '))+'\n')
 
-    with open('temp/categories.csv','w',encoding='utf-8') as f:
+    with open('temp/categories.csv','w') as f:
         f.write("categoryIdD:ID@CategoryName\n")
         for key,value in categoryDict.items():
             f.write(str(value)+"@"+key+'\n')
 
-    with open('temp/authors.csv','w',encoding='utf-8') as f:
+    with open('temp/authors.csv','w') as f:
         f.write("authorID:ID@LastName@FirstNames@Suffix\n")
         for key,value in uniqueAuthors.items():
             f.write(str(value)+"@"+key[0]+"@"+key[1]+"@"+key[2]+'\n')
