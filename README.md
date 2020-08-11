@@ -25,3 +25,8 @@ report-no - text
 categories - list
 
 versions - list
+
+
+### bulk import
+
+neo4j-admin.bat import --nodes=ResearchPapers=d:\kaggle_arxiv\temp\metadata.csv --nodes=ResearchCategories=d:\kaggle_arxiv\temp\categories.csv --nodes=Authors=d:\kaggle_arxiv\temp\authors.csv --relationships=d:\kaggle_arxiv\temp\papers-authors-rule.csv --relationships=d:\kaggle_arxiv\temp\papers-categories-rule.csv --delimiter="@"
