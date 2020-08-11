@@ -15,8 +15,7 @@ def generate_bulk_entry_csvs():
     i=0
     for category in categories:
         i+=1
-        categoryDict[category]=i
-
+        categoryDict[category]="cat" + str(i).zfill(len(str(len(categories))))
     Author = namedtuple("Author", ["lastname", "firstnames","suffix"])
     uniqueAuthors={}
     i=0
@@ -25,14 +24,14 @@ def generate_bulk_entry_csvs():
             authorTuple=Author(author[0],author[1],author[2])
             if authorTuple not in uniqueAuthors:
                 i+=1
-                uniqueAuthors[authorTuple]=i
+                uniqueAuthors[authorTuple]="aut" + str(i).zfill(len(str(len(authors))))
 
     #generate the csvs in the temp directory
     with open('temp/metadata.csv','w') as f:
         f.write('researchPaperID:ID@Date@Title\n')
         for key,value in metadata.items():
             f.write(value['id']+"@"+value['date']+"@"
-                    +re.sub(' +', ' ', value['title'].replace("@","_at_").replace('\n',' '))+'\n')
+                    +re.sub(' +', ' ', value['title'].replace('\n',' '))+'\n')
 
     with open('temp/categories.csv','w') as f:
         f.write("categoryIdD:ID@CategoryName\n")
@@ -44,8 +43,26 @@ def generate_bulk_entry_csvs():
         for key,value in uniqueAuthors.items():
             f.write(str(value)+"@"+key[0]+"@"+key[1]+"@"+key[2]+'\n')
 
+    with open('temp/papers-categories-rule.csv','w') as f:
+        f.write(':START_ID@:END_ID@:TYPE\n')
+        for key, value in metadata.items():
+            for category in value['categories']:
+                f.write(key+'@'+categoryDict[category]+"@INCATEGORY\n")
 
+    with open('temp/papers-authors-rule.csv','w') as f:
+        f.write(':START_ID@:END_ID@:TYPE\n')
+        for key, value in metadata.items():
+            for author in authors[key]:
+                authorKey=Author(author[0],author[1],author[2])
+                f.write(key+'@'+uniqueAuthors[authorKey]+"@WRITTENBY\n")
 
+    with open('temp/papers-citations-rule.csv','w') as f:
+        f.write(':START_ID@:END_ID@:TYPE\n')
+        for key in metadata:
+            for citationkey in citations:
+                if key==citationkey or citationkey not in metadata:
+                    continue
+                f.write(key+'@'+citationkey+'@CITES\n')
 
 def create_research_entry(tx,researchPaper):
     tx.run("MERGE (a:ResearchPaper {id: $id, title: $title}) ",
