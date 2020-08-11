@@ -2,9 +2,9 @@ from data_utilities import load_authors,load_citations,load_metadata,get_all_cat
 from tqdm import tqdm
 from collections import namedtuple
 import re
-#from neo4j import GraphDatabase
+from neo4j import GraphDatabase
 
-#driver = GraphDatabase.driver("neo4j://localhost:7687", auth=("neo4j", "arxiv123"))
+driver = GraphDatabase.driver("neo4j://localhost:7687", auth=("neo4j", "arxiv123"))
 
 def generate_bulk_entry_csvs():
     categories = get_all_categories()
@@ -66,15 +66,15 @@ def generate_bulk_entry_csvs():
                     f.write(key+'@'+citationkey+'@CITES\n')
 
 def create_research_entry(tx,researchPaper):
-    tx.run("MERGE (a:ResearchPaper {id: $id, title: $title}) ",
-           id=researchPaper['id'], title=researchPaper['title'])
+    tx.run("CREATE (a:ResearchPaper {id: $researchId, title: $title}) ",
+           researchId=researchPaper['id'], title=researchPaper['title'])
 
 def create_category_entry(tx,category):
-    tx.run("MERGE (a:ResearchCategory {name: $name})",
-           name=category)
+    tx.run("MERGE (a:ResearchCategory {name: $categoryName})",
+           categoryName=category)
 
 def create_author_entry(tx,authorAsList):
-    tx.run("MERGE (a:ResearchAuthor {lastname: $lastname, firstnames: $firstnames, suffix: $suffix})",
+    tx.run("CREATE (a:ResearchAuthor {lastname: $lastname, firstnames: $firstnames, suffix: $suffix})",
            lastname=authorAsList[0],firstnames=authorAsList[1],suffix=authorAsList[2])
 
 def add_research_author_relationship(tx,researchPaper,authorList):
@@ -117,8 +117,8 @@ def add_all_categories():
 
 
 def populate_graph():
-    add_all_categories()
-    metadata = load_metadata()
+    #add_all_categories()
+    _,metadata = load_metadata()
     citations=load_citations()
 
     #sub_metadata = {}
@@ -133,23 +133,24 @@ def populate_graph():
             #create entry
             session.write_transaction(create_research_entry,value)
             #create relationship to categories
-            session.write_transaction(add_research_category_relationship,value)
+            ###session.write_transaction(add_research_category_relationship,value)
             #create author and relationship to authors
             if value['id'] in authors:
                 author_data=authors[value['id']]
                 for author in author_data:
                     session.write_transaction(create_author_entry,author)
-                session.write_transaction(add_research_author_relationship,value,author_data)
+                ###session.write_transaction(add_research_author_relationship,value,author_data)
         #now create citations
-        for key,value in tqdm(metadata.items()):
-            if key in citations:
-                citationlist=citations[key]
-                for item in citationlist:
-                    if key!=item:
-                        if item in metadata:
-                            session.write_transaction(add_research_citation_relationship,value,metadata[item])
+        #for key,value in tqdm(metadata.items()):
+        #    if key in citations:
+        #        citationlist=citations[key]
+        #        for item in citationlist:
+        #            if key!=item:
+        #                if item in metadata:
+        #                    session.write_transaction(add_research_citation_relationship,value,metadata[item])
 
 
 
 if __name__=='__main__':
-    generate_bulk_entry_csvs()
+    #generate_bulk_entry_csvs()
+    populate_graph()
