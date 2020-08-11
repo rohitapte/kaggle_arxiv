@@ -109,10 +109,10 @@ def populate_graph():
         # add unique authors
         i = 0
         tx=session.begin_transaction()
-        for key in tqdm(uniqueAuthors):
+        for key,value in tqdm(uniqueAuthors.items()):
             i+=1
-            tx.run("CREATE (a:ResearchAuthor {lastname: $lastname, firstnames: $firstnames, suffix: $suffix})",
-                   lastname=key[0], firstnames=key[1], suffix=key[2])
+            tx.run("CREATE (a:ResearchAuthor {id: $catid, lastname: $lastname, firstnames: $firstnames, suffix: $suffix})",
+                   catid="aut" + str(i).zfill(len(str(len(uniqueAuthors)))),lastname=key[0], firstnames=key[1], suffix=key[2])
             if i % 100000 == 0:
                 tx.commit()
                 tx = session.begin_transaction()
@@ -123,6 +123,7 @@ def populate_graph():
         tx.run("CREATE INDEX FOR (n:ResearchCategory) ON (n.name)")
         tx.run("CREATE INDEX FOR (n:ResearchPaper) ON (n.title)")
         tx.run("CREATE INDEX FOR (n:ResearchPaper) ON (n.id)")
+        tx.run("CREATE INDEX FOR (n:ResearchAuthor) ON (n.id)")
         tx.run("CREATE INDEX FOR (n:ResearchAuthor) ON (n.lastname,n.firstnames,n.suffix)")
         tx.commit()
         tx.close()
@@ -163,16 +164,17 @@ def populate_graph():
         i=0
         tx = session.begin_transaction()
         for key, value in tqdm(metadata.items()):
-            for citationkey in citations[key]:
-                if citationkey!=key and citationkey in metadata:
-                    i += 1
-                    tx.run("MATCH(a: ResearchPaper), (b: ResearchPaper) "
-                           "WHERE a.id = $research_id and b.id = $citation_id "
-                           "CREATE (a) - [r: CITES]->(b)",
-                           research_id=key, citation_id=citationkey)
-                if i % 100000 == 0:
-                    tx.commit()
-                    tx = session.begin_transaction()
+            if key in citations:
+                for citationkey in citations[key]:
+                    if citationkey!=key and citationkey in metadata:
+                        i += 1
+                        tx.run("MATCH(a: ResearchPaper), (b: ResearchPaper) "
+                               "WHERE a.id = $research_id and b.id = $citation_id "
+                               "CREATE (a) - [r: CITES]->(b)",
+                               research_id=key, citation_id=citationkey)
+                    if i % 100000 == 0:
+                        tx.commit()
+                        tx = session.begin_transaction()
         tx.commit()
         tx.close()
 if __name__=='__main__':
