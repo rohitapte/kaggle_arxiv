@@ -28,7 +28,7 @@ def get_all_categories():
     :return: set of unique categories
     """
     categories=defaultdict(int)
-    with open(DATA_DIR+'arxiv-metadata-oai-snapshot-lite.json') as f:
+    with open(DATA_DIR+'arxiv-metadata-oai-snapshot.json') as f:
         for line in f:
             data=json.loads(line)
             for item in data['categories'][0].split(' '):
@@ -45,7 +45,7 @@ def load_metadata():
     """
     return_data={}
     unique_id_count=defaultdict(int)
-    with open(DATA_DIR+'arxiv-metadata-oai-snapshot-lite.json') as f:
+    with open(DATA_DIR+'arxiv-metadata-oai-snapshot.json') as f:
         for line in f:
             data=json.loads(line)
             unique_id_count[data['id']]+=1
@@ -63,7 +63,7 @@ def load_citations():
     load citations from file
     :return: dictionary of citations by id
     """
-    with open(DATA_DIR+'internal-citations-lite.json') as f:
+    with open(DATA_DIR+'internal-citations.json') as f:
         citationdict=json.loads(f.read())
     if 'acc-phys/9607002' in citationdict:
         citationdict.pop('acc-phys/9607002')
@@ -83,7 +83,7 @@ def load_authors():
     :return: dictionary of author by id
     """
     unique_authors={}
-    with open(DATA_DIR+'authors-parsed-lite.json',encoding='utf-8') as f:
+    with open(DATA_DIR+'authors-parsed.json',encoding='utf-8') as f:
         authordict=json.loads(f.read())
     return authordict
 
@@ -95,7 +95,7 @@ def print_metadata_diff_for_ids(list_of_ids):
     :return: None
     """
     found_items=defaultdict(list)
-    with open(DATA_DIR + 'arxiv-metadata-oai-snapshot-lite.json') as f:
+    with open(DATA_DIR + 'arxiv-metadata-oai-snapshot.json') as f:
         for line in f:
             data = json.loads(line)
             if data['id'] in list_of_ids:

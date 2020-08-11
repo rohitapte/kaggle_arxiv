@@ -75,11 +75,13 @@ def populate_graph():
     #get the unique authors list
     Author = namedtuple("Author", ["lastname", "firstnames", "suffix"])
     uniqueAuthors = {}
+    i=0
     for key, items in authors.items():
         for author in items:
             authorTuple = Author(author[0], author[1], author[2])
             if authorTuple not in uniqueAuthors:
-                uniqueAuthors[authorTuple] = 1
+                i+=1
+                uniqueAuthors[authorTuple] = "aut" + str(i).zfill(len(str(len(authors))))
     print("Loading data...done")
     print("Categories: "+str(len(categories)))
     print("Citations: "+str(len(citations)))
@@ -128,6 +130,28 @@ def populate_graph():
         tx.commit()
         tx.close()
 
+
+        with open('paper-author.csv','w') as f:
+            f.write('research_id,author_id\n')
+            for key, authorList in tqdm(authors.items()):
+                for author in authorList:
+                    authorTuple = Author(author[0], author[1], author[2])
+                    f.write(key+','+uniqueAuthors[authorTuple]+'\n')
+
+        with open('paper-categories.csv', 'w') as f:
+            f.write('research_id,category_name\n')
+            for key, value in tqdm(metadata.items()):
+                for category in value['categories']:
+                    f.write(key + ',' + category + '\n')
+
+        with open('paper-citations.csv', 'w') as f:
+            f.write('research_id,citation_id')
+            for key, value in tqdm(metadata.items()):
+                if key in citations:
+                    for citation in citations['key']:
+                        if citation != key and citation in metadata:
+                            f.write(key + ',' + citation + '\n')
+        """
         #author-research relationships
         i=0
         tx=session.begin_transaction()
@@ -177,6 +201,7 @@ def populate_graph():
                         tx = session.begin_transaction()
         tx.commit()
         tx.close()
+        """
 if __name__=='__main__':
     #generate_bulk_entry_csvs()
     populate_graph()
