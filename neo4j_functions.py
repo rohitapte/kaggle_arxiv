@@ -65,92 +65,109 @@ def generate_bulk_entry_csvs():
                         continue
                     f.write(key+'@'+citationkey+'@CITES\n')
 
-def create_research_entry(tx,researchPaper):
-    tx.run("CREATE (a:ResearchPaper {id: $researchId, title: $title}) ",
-           researchId=researchPaper['id'], title=researchPaper['title'])
-
-def create_category_entry(tx,category):
-    tx.run("MERGE (a:ResearchCategory {name: $categoryName})",
-           categoryName=category)
-
-def create_author_entry(tx,authorAsList):
-    tx.run("CREATE (a:ResearchAuthor {lastname: $lastname, firstnames: $firstnames, suffix: $suffix})",
-           lastname=authorAsList[0],firstnames=authorAsList[1],suffix=authorAsList[2])
-
-def add_research_author_relationship(tx,researchPaper,authorList):
-    for author in authorList:
-        tx.run("MATCH(a: ResearchPaper), (b:ResearchAuthor) "
-               "WHERE a.id = $research_id AND b.lastname = $lastname and b.firstnames = $firstnames and b.suffix = $suffix "
-               "CREATE(a) - [r: WRITTENBY]->(b)",
-               research_id=researchPaper['id'], lastname=author[0], firstnames=author[1], suffix=author[2])
-#        tx.run("MATCH(a: ResearchPaper), (b:ResearchAuthor) "
-#               "WHERE a.id = $research_id AND b.lastname = $lastname and b.firstnames = $firstnames and b.suffix = $suffix "
-#               "CREATE(b) - [r: WROTE]->(a)",
-#               research_id=researchPaper['id'], lastname=author[0], firstnames=author[1], suffix=author[2])
-
-def add_research_category_relationship(tx,researchPaper):
-    for category in researchPaper['categories']:
-        tx.run("MATCH(a: ResearchPaper), (b:ResearchCategory) "
-               "WHERE a.id = $research_id AND b.name = $category_name "
-               "CREATE(a) - [r: RESEARCHCATEGORY]->(b)",
-               research_id=researchPaper['id'],category_name=category)
-#        tx.run("MATCH(a: ResearchPaper), (b:ResearchCategory) "
-#               "WHERE a.id = $research_id AND b.name = $category_name "
-#               "CREATE(b) - [r: CONTAINSRESEARCH]->(a)",
-#               research_id=researchPaper['id'], category_name=category)
-
-def add_research_citation_relationship(tx,researchPaper,citationPaper):
-    tx.run("MATCH(a: ResearchPaper), (b: ResearchPaper) "
-           "WHERE a.id = $research_id and b.id = $citation_id "
-           "CREATE (a) - [r: CITES]->(b)",
-           research_id=researchPaper['id'], citation_id=citationPaper['id'])
-#    tx.run("MATCH(a: ResearchPaper), (b: ResearchPaper) "
-#           "WHERE a.id = $research_id and b.id = $citation_id "
-#           "CREATE (b) - [r: CITEDBY]->(a)",
-#           research_id=researchPaper['id'], citation_id=citationPaper['id'])
-
-def add_all_categories():
-    categories=get_all_categories()
-    with driver.session() as session:
-        for category in tqdm(categories):
-            session.write_transaction(create_category_entry,category)
-
 
 def populate_graph():
-    #add_all_categories()
-    _,metadata = load_metadata()
-    citations=load_citations()
-
-    #sub_metadata = {}
-    #for key, value in tqdm(metadata.items()):
-    #    if 'cs.AI' in value['categories']:
-    #        sub_metadata[key] = value
-    #metadata=sub_metadata
-
-    authors=load_authors()
+    print("Loading data")
+    categories = get_all_categories()
+    citations = load_citations()
+    authors = load_authors()
+    _, metadata = load_metadata()
+    #get the unique authors list
+    Author = namedtuple("Author", ["lastname", "firstnames", "suffix"])
+    uniqueAuthors = {}
+    for key, items in authors.items():
+        for author in items:
+            authorTuple = Author(author[0], author[1], author[2])
+            if authorTuple not in uniqueAuthors:
+                uniqueAuthors[authorTuple] = 1
+    print("Loading data...done")
+    print("Categories: "+str(len(categories)))
+    print("Citations: "+str(len(citations)))
+    print("Research Papers: "+str(len(metadata)))
+    print("Unique Authors:"+str(len(uniqueAuthors)))
     with driver.session() as session:
+        #add categories
+        with session.begin_transaction() as tx:
+            for category in tqdm(categories):
+                tx.run("CREATE (a:ResearchCategory {name: $categoryName})",
+                       categoryName=category)
+            tx.commit()
+
+        #add metadata
+        i = 0
+        # add unique authors
+        tx=session.begin_transaction()
         for key,value in tqdm(metadata.items()):
-            #create entry
-            session.write_transaction(create_research_entry,value)
-            #create relationship to categories
-            ###session.write_transaction(add_research_category_relationship,value)
-            #create author and relationship to authors
-            if value['id'] in authors:
-                author_data=authors[value['id']]
-                for author in author_data:
-                    session.write_transaction(create_author_entry,author)
-                ###session.write_transaction(add_research_author_relationship,value,author_data)
-        #now create citations
-        #for key,value in tqdm(metadata.items()):
-        #    if key in citations:
-        #        citationlist=citations[key]
-        #        for item in citationlist:
-        #            if key!=item:
-        #                if item in metadata:
-        #                    session.write_transaction(add_research_citation_relationship,value,metadata[item])
+            i += 1
+            tx.run("CREATE (a:ResearchPaper {id: $researchId, title: $title}) ",
+                   researchId=value['id'], title=value['title'])
+            if i%100000==0:
+                tx.commit()
+                tx = session.begin_transaction()
+        tx.commit()
+        tx.close()
 
+        i = 0
+        #add unique authors
+        tx=session.begin_transaction()
+        for key in tqdm(uniqueAuthors):
+            i+=1
+            tx.run("CREATE (a:ResearchAuthor {lastname: $lastname, firstnames: $firstnames, suffix: $suffix})",
+                   lastname=key[0], firstnames=key[1], suffix=key[2])
+            if i % 100000 == 0:
+                tx.commit()
+                tx = session.begin_transaction()
+        tx.commit()
+        tx.close()
 
+        #author-research relationships
+        i=0
+        tx=session.begin_transaction()
+        for key,authorList in tqdm(authors.items()):
+            for author in authorList:
+                i+=1
+                tx.run("MATCH(a: ResearchPaper), (b:ResearchAuthor) "
+                       "WHERE a.id = $research_id AND b.lastname = $lastname and b.firstnames = $firstnames and b.suffix = $suffix "
+                       "CREATE(a) - [r: WRITTENBY]->(b)",
+                       research_id=key, lastname=author[0], firstnames=author[1], suffix=author[2])
+                if i % 100000 == 0:
+                    tx.commit()
+                    tx = session.begin_transaction()
+        tx.commit()
+        tx.close()
 
+        #reseatch-category relationships
+        i=0
+        tx = session.begin_transaction()
+        for key,value in tqdm(metadata.items()):
+            for category in value['categories']:
+                i+=1
+                tx.run("MATCH(a: ResearchPaper), (b:ResearchCategory) "
+                       "WHERE a.id = $research_id AND b.name = $category_name "
+                       "CREATE(a) - [r: RESEARCHCATEGORY]->(b)",
+                       research_id=key, category_name=category)
+                if i % 100000 == 0:
+                    tx.commit()
+                    tx = session.begin_transaction()
+        tx.commit()
+        tx.close()
+
+        #research-citations relationships
+        i=0
+        tx = session.begin_transaction()
+        for key, value in tqdm(metadata.items()):
+            for citationkey in citations[key]:
+                if citationkey!=key and citationkey in metadata:
+                    i += 1
+                    tx.run("MATCH(a: ResearchPaper), (b: ResearchPaper) "
+                           "WHERE a.id = $research_id and b.id = $citation_id "
+                           "CREATE (a) - [r: CITES]->(b)",
+                           research_id=key, citation_id=citationkey)
+                if i % 100000 == 0:
+                    tx.commit()
+                    tx = session.begin_transaction()
+        tx.commit()
+        tx.close()
 if __name__=='__main__':
     #generate_bulk_entry_csvs()
     populate_graph()
