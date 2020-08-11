@@ -95,7 +95,6 @@ def populate_graph():
 
         #add metadata
         i = 0
-        # add unique authors
         tx=session.begin_transaction()
         for key,value in tqdm(metadata.items()):
             i += 1
@@ -107,8 +106,8 @@ def populate_graph():
         tx.commit()
         tx.close()
 
+        # add unique authors
         i = 0
-        #add unique authors
         tx=session.begin_transaction()
         for key in tqdm(uniqueAuthors):
             i+=1
@@ -117,6 +116,14 @@ def populate_graph():
             if i % 100000 == 0:
                 tx.commit()
                 tx = session.begin_transaction()
+        tx.commit()
+        tx.close()
+
+        tx = session.begin_transaction()
+        tx.run("CREATE INDEX FOR (n:ResearchCategory) ON (n.name)")
+        tx.run("CREATE INDEX FOR (n:ResearchPaper) ON (n.title)")
+        tx.run("CREATE INDEX FOR (n:ResearchPaper) ON (n.id)")
+        tx.run("CREATE INDEX FOR (n:ResearchAuthor) ON (n.lastname,n.firstnames,n.suffix)")
         tx.commit()
         tx.close()
 
