@@ -31,7 +31,7 @@ def generate_bulk_entry_csvs():
         f.write('researchPaperID:ID@Date@Title\n')
         for key,value in metadata.items():
             f.write(value['id']+"@"+value['date']+"@"
-                    +re.sub(' +', ' ', value['title'].replace('\n',' '))+'\n')
+                    +re.sub(' +', ' ', value['title'].replace('@','_at_').replace('"','').replace('\n',' '))+'\n')
 
     with open('temp/categories.csv','w') as f:
         f.write("categoryIdD:ID@CategoryName\n")
@@ -41,7 +41,7 @@ def generate_bulk_entry_csvs():
     with open('temp/authors.csv','w') as f:
         f.write("authorID:ID@LastName@FirstNames@Suffix\n")
         for key,value in uniqueAuthors.items():
-            f.write(str(value)+"@"+key[0]+"@"+key[1]+"@"+key[2]+'\n')
+            f.write(str(value)+"@"+key[0].replace('@','_at_').replace('"','')+"@"+key[1].replace('@','_at_').replace('"','')+"@"+key[2].replace('@','_at_').replace('"','')+'\n')
 
     with open('temp/papers-categories-rule.csv','w') as f:
         f.write(':START_ID@:END_ID@:TYPE\n')
@@ -59,10 +59,11 @@ def generate_bulk_entry_csvs():
     with open('temp/papers-citations-rule.csv','w') as f:
         f.write(':START_ID@:END_ID@:TYPE\n')
         for key in metadata:
-            for citationkey in citations:
-                if key==citationkey or citationkey not in metadata:
-                    continue
-                f.write(key+'@'+citationkey+'@CITES\n')
+            if key in citations:
+                for citationkey in citations[key]:
+                    if key==citationkey or citationkey not in metadata:
+                        continue
+                    f.write(key+'@'+citationkey+'@CITES\n')
 
 def create_research_entry(tx,researchPaper):
     tx.run("MERGE (a:ResearchPaper {id: $id, title: $title}) ",
