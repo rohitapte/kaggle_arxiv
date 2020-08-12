@@ -51,3 +51,18 @@ MATCH (n)
 WITH n LIMIT 300000
 DETACH DELETE n
 RETURN count(*)
+
+summary by category
+
+MATCH (p:ResearchPaper)-[:INCATEGORY]->(c:ResearchCategory)
+RETURN c.name,count(p)
+
+citations for paper by id
+
+MATCH (citepaper:ResearchPaper)<-[:CITES]-(p:ResearchPaper {id:'cond-mat/0406317'})
+return p,count(citepaper)
+
+paper, count of citations
+
+MATCH (citepaper:ResearchPaper)<-[:CITES]-(p:ResearchPaper )
+return p,count(citepaper)
