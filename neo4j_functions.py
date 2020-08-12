@@ -123,10 +123,8 @@ def populate_graph():
 
         tx = session.begin_transaction()
         tx.run("CREATE INDEX FOR (n:ResearchCategory) ON (n.name)")
-        tx.run("CREATE INDEX FOR (n:ResearchPaper) ON (n.title)")
         tx.run("CREATE INDEX FOR (n:ResearchPaper) ON (n.id)")
         tx.run("CREATE INDEX FOR (n:ResearchAuthor) ON (n.id)")
-        tx.run("CREATE INDEX FOR (n:ResearchAuthor) ON (n.lastname,n.firstnames,n.suffix)")
         tx.commit()
         tx.close()
 
@@ -148,7 +146,7 @@ def populate_graph():
             f.write('research_id,citation_id')
             for key, value in tqdm(metadata.items()):
                 if key in citations:
-                    for citation in citations['key']:
+                    for citation in citations[key]:
                         if citation != key and citation in metadata:
                             f.write(key + ',' + citation + '\n')
         """
