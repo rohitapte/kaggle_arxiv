@@ -43,3 +43,11 @@ CREATE(a) - [r: INCATEGORY]->(b)
 load csv with headers from "file:///paper-categories.csv" as csvline
 MATCH(a: ResearchPaper {id: csvline.research_id}), (b:ResearchPaper {id: csvline.citation_id}) 
 CREATE(a) - [r: CITES]->(b)
+
+
+// Find the nodes you want to delete
+MATCH (n) 
+// Take the first 10k nodes and their rels (if more than 100 rels / node on average lower this number)
+WITH n LIMIT 300000
+DETACH DELETE n
+RETURN count(*)
