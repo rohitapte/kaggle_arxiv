@@ -40,6 +40,6 @@ load csv with headers from "file:///paper-categories.csv" as csvline
 MATCH(a: ResearchPaper {id: csvline.research_id}), (b:ResearchCategory {name: csvline.category_name}) 
 CREATE(a) - [r: INCATEGORY]->(b)
 
-load csv with headers from "file:///paper-categories.csv" as csvline
+load csv with headers from "file:///paper-citations.csv" as csvline
 MATCH(a: ResearchPaper {id: csvline.research_id}), (b:ResearchPaper {id: csvline.citation_id}) 
 CREATE(a) - [r: CITES]->(b)

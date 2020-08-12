@@ -121,12 +121,12 @@ def populate_graph():
         tx.commit()
         tx.close()
 
-        tx = session.begin_transaction()
-        tx.run("CREATE INDEX FOR (n:ResearchCategory) ON (n.name)")
-        tx.run("CREATE INDEX FOR (n:ResearchPaper) ON (n.id)")
-        tx.run("CREATE INDEX FOR (n:ResearchAuthor) ON (n.id)")
-        tx.commit()
-        tx.close()
+        #tx = session.begin_transaction()
+        #tx.run("CREATE INDEX FOR (n:ResearchCategory) ON (n.name)")
+        #tx.run("CREATE INDEX FOR (n:ResearchPaper) ON (n.id)")
+        #tx.run("CREATE INDEX FOR (n:ResearchAuthor) ON (n.id)")
+        #tx.commit()
+        #tx.close()
 
 
         with open('paper-author.csv','w') as f:
@@ -143,7 +143,7 @@ def populate_graph():
                     f.write(key + ',' + category + '\n')
 
         with open('paper-citations.csv', 'w') as f:
-            f.write('research_id,citation_id')
+            f.write('research_id,citation_id\n')
             for key, value in tqdm(metadata.items()):
                 if key in citations:
                     for citation in citations[key]:
