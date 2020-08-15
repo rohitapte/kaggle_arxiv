@@ -2,60 +2,50 @@ CREATE INDEX FOR (n:ResearchCategory) ON (n.name);
 CREATE INDEX FOR (n:ResearchPaper) ON (n.title);
 CREATE INDEX FOR (n:ResearchAuthor) ON (n.lastname,n.firstnames,n.suffix)
 
+load csv with headers from "file:///paper-author.csv" as csvline
+MATCH(a: ResearchPaper {id: csvline.research_id}), (b:ResearchAuthor {id: csvline.author_id})
+CREATE(a) - [r: WRITTENBY]->(b)
 
+load csv with headers from "file:///paper-categories.csv" as csvline
+MATCH(a: ResearchPaper {id: csvline.research_id}), (b:ResearchCategory {name: csvline.category_name})
+CREATE(a) - [r: INCATEGORY]->(b)
+
+load csv with headers from "file:///paper-citations.csv" as csvline
+MATCH(a: ResearchPaper {id: csvline.research_id}), (b:ResearchPaper {id: csvline.citation_id})
+CREATE(a) - [r: CITES]->(b)
+
+
+// Find the nodes you want to delete
+MATCH (n)
+// Take the first 10k nodes and their rels (if more than 100 rels / node on average lower this number)
+WITH n LIMIT 300000
+DETACH DELETE n
+RETURN count(*)
+
+summary by category
+MATCH (p:ResearchPaper)-[:INCATEGORY]->(c:ResearchCategory)
+RETURN c.name,count(p)
+
+citations for paper by id
+MATCH (citepaper:ResearchPaper)<-[:CITES]-(p:ResearchPaper {id:'cond-mat/0406317'})
+return p,count(citepaper)
+
+paper, count of citations
+MATCH (citepaper:ResearchPaper)<-[:CITES]-(p:ResearchPaper )
+return p,count(citepaper)
 MATCH (n) DETACH DELETE n
 
 MATCH (n:ResearchCategory)
 RETURN count(n) as count
 
 
-MERGE(category: ResearchCategory {name: 'cs.HC'});
+
+working example
+match(n:ResearchPaper{id:'1812.10299'}) return n
 
 
-MATCH (a:ResearchPaper),(b:ResearchCategory)
-WHERE a.id = '0704.0047' AND b.name = 'cs.AI'
-CREATE (a)-[r:RESEARCHCATEGORY]->(b)
-RETURN r
-
-MATCH (a:ResearchPaper),(b:ResearchCategory)
-WHERE a.id = '0704.0047' AND b.name = 'cs.AI'
-CREATE (b)-[r:CONTAINSRESEARCH]->(a)
-RETURN r
-
-MATCH (a:ResearchPaper),(b:ResearchCategory)
-WHERE a.id = '0704.0047' AND b.name = 'cs.NE'
-CREATE (a)-[r:RESEARCHCATEGORY]->(b)
-RETURN r
-
-MATCH (a:ResearchPaper),(b:ResearchCategory)
-WHERE a.id = '0704.0047' AND b.name = 'cs.NE'
-CREATE (b)-[r:CONTAINSRESEARCH]->(a)
-RETURN r
-
-
-
-MATCH (a:ResearchPaper),(b:ResearchCategory)
-WHERE a.id = '0704.0050' AND b.name = 'cs.AI'
-CREATE (a)-[r:RESEARCHCATEGORY]->(b)
-RETURN r
-
-MATCH (a:ResearchPaper),(b:ResearchCategory)
-WHERE a.id = '0704.0050' AND b.name = 'cs.AI'
-CREATE (b)-[r:CONTAINSRESEARCH]->(a)
-RETURN r
-
-MATCH (a:ResearchPaper),(b:ResearchCategory)
-WHERE a.id = '0704.0050' AND b.name = 'cs.NE'
-CREATE (a)-[r:RESEARCHCATEGORY]->(b)
-RETURN r
-
-MATCH (a:ResearchPaper),(b:ResearchCategory)
-WHERE a.id = '0704.0050' AND b.name = 'cs.NE'
-CREATE (b)-[r:CONTAINSRESEARCH]->(a)
-RETURN r
-
-
-
-MATCH (a)-[:CITEDBY]->(b)
-RETURN b, COLLECT(a) as papers
-ORDER BY SIZE(papers) DESC LIMIT 10
+MATCH (r:ResearchPaper)-[:CITES]->(c:ResearchPaper)-[:INCATEGORY]->(cat:ResearchCategory)
+WITH cat.name as CatName,c.id as CiteId,count(r.id) as CitedCount
+with CatName,collect(CiteId) as citations,collect(CitedCount) as counts,max(CitedCount) as MaxCount
+return CatName,citations[apoc.coll.indexOf(counts,MaxCount)],MaxCount
+order by MaxCount
