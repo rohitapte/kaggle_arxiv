@@ -1,6 +1,9 @@
 import re
 import json
 from collections import defaultdict
+from nltk import word_tokenize
+import gensim
+
 DATA_DIR='data/'
 
 latex_regex = re.compile("\$(.*?)\$")
@@ -157,6 +160,7 @@ def clean_text(sText):
     """
     formatted_text = numeric_regex.sub('_NUMBER_', latex_regex.sub('_EQUATION_', sText))
     return formatted_text.lower()
+
 
 if __name__=='__main__':
     unique_ids,return_data=load_metadata()
