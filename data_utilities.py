@@ -1,6 +1,10 @@
+import re
 import json
 from collections import defaultdict
 DATA_DIR='data/'
+
+latex_regex = re.compile("\$(.*?)\$")
+numeric_regex = re.compile(r'^-?[0-9]+$')
 
 def parse_id_for_datestring(arxiv_id):
     """
@@ -31,7 +35,7 @@ def get_all_categories():
     with open(DATA_DIR+'arxiv-metadata-oai-snapshot.json') as f:
         for line in f:
             data=json.loads(line)
-            for item in data['categories'][0].split(' '):
+            for item in data['categories'].split(' '):
                 categories[item]+=1
     return categories
 
@@ -53,9 +57,29 @@ def load_metadata():
                 'id': data['id'],
                 'date': parse_id_for_datestring(data['id']),
                 'title': data['title'],
-                'categories': data['categories'][0].split(' '),
+                'categories': data['categories'].split(' '),
             }
             return_data[data['id']]=newitem
+    return unique_id_count,return_data
+
+def load_data():
+    """
+    loads the arxiv metadata from file. there are duplicate entries if there has been an update.
+    seems like the later entries are more current
+    :return:
+        unique_id_count - count of duplicates
+        return_data - dictionary hashed by id of metadata
+    """
+    return_data={}
+    unique_id_count=defaultdict(int)
+    with open(DATA_DIR+'arxiv-metadata-oai-snapshot.json') as f:
+        for line in f:
+            data=json.loads(line)
+            data['title'] = data['title'].strip().replace('\n', ' ')
+            data['abstract']=data['abstract'].strip().replace('\n',' ')
+            data['abstract_cleaned']=clean_text(data['abstract'])
+            unique_id_count[data['id']]+=1
+            return_data[data['id']]=data
     return unique_id_count,return_data
 
 def load_citations():
@@ -98,6 +122,7 @@ def print_metadata_diff_for_ids(list_of_ids):
     with open(DATA_DIR + 'arxiv-metadata-oai-snapshot.json') as f:
         for line in f:
             data = json.loads(line)
+            data['abstract']=data['abstract']
             if data['id'] in list_of_ids:
                 found_items[data['id']].append(data)
     if len(found_items)>0:
@@ -121,6 +146,17 @@ def print_metadata_diff_for_ids(list_of_ids):
             print("__________________________________________")
     else:
         print("No items found for id "+' '.join(item for item in list_of_ids))
+
+def clean_text(sText):
+    """
+    :param sText: text to clean
+    :return: cleaned text
+
+    since these are science papers, convert everything within $...$ to EQUATION
+    convert numbers to NUMBER
+    """
+    formatted_text = numeric_regex.sub('_NUMBER_', latex_regex.sub('_EQUATION_', sText))
+    return formatted_text
 
 if __name__=='__main__':
     unique_ids,return_data=load_metadata()
