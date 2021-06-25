@@ -26,3 +26,7 @@ class GensimResearchCorpus(object):
                     yield tokens
                 else:
                     yield gensim.models.doc2vec.TaggedDocument(tokens, [i])
+
+if __name__=='__main__':
+    for item in GensimResearchCorpus():
+        print(item)
