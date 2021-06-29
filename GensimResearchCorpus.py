@@ -56,11 +56,17 @@ class ResearchCorpus(object):
                 yield data
 
 if __name__=='__main__':
+    vector_size=300
+    min_count=5
+    filterCategory = None
     model = gensim.models.doc2vec.Doc2Vec(workers=8,
                                           vector_size=50,
                                           min_count=5,
-                                          epochs=20)
-    mycorpus = GensimResearchCorpus(filterCategory='cs.CG')
+                                          epochs=40)
+    mycorpus = GensimResearchCorpus(filterCategory=filterCategory)
     model.build_vocab(mycorpus)
     model.train(mycorpus, total_examples=model.corpus_count, epochs=model.epochs)
-    model.save('doc2vec.model')
+    sFilterCategory = 'None'
+    if filterCategory is not None:
+        sFilterCategory=filterCategory
+    model.save('doc2vec.model_'+str(vector_size)+'_'+str(min_count)+'_'+sFilterCategory)
