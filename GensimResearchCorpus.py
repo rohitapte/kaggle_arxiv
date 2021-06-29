@@ -58,10 +58,10 @@ class ResearchCorpus(object):
 if __name__=='__main__':
     vector_size=300
     min_count=5
-    filterCategory = None
+    filterCategory = 'cs'
     model = gensim.models.doc2vec.Doc2Vec(workers=8,
-                                          vector_size=50,
-                                          min_count=5,
+                                          vector_size=vector_size,
+                                          min_count=min_count,
                                           epochs=40)
     mycorpus = GensimResearchCorpus(filterCategory=filterCategory)
     model.build_vocab(mycorpus)
