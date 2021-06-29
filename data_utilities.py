@@ -73,7 +73,7 @@ def load_data():
         unique_id_count - count of duplicates
         return_data - dictionary hashed by id of metadata
     """
-    return_data=[]
+    return_data={}
     unique_id_count=defaultdict(int)
     with open(DATA_DIR+'arxiv-metadata-oai-snapshot.json') as f:
         for line in f:
@@ -82,7 +82,7 @@ def load_data():
             data['abstract']=data['abstract'].strip().replace('\n',' ')
             data['abstract_cleaned']=clean_text(data['abstract'])
             unique_id_count[data['id']]+=1
-            return_data.append(data)
+            return_data[data['id']]=data
     return unique_id_count,return_data
 
 def load_citations():
