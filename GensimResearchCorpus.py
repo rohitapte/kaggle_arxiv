@@ -56,7 +56,7 @@ class ResearchCorpus(object):
                 yield data
 
 if __name__=='__main__':
-    vector_size=100
+    vector_size=200
     min_count=10
     filterCategory = None
     model = gensim.models.doc2vec.Doc2Vec(workers=8,
