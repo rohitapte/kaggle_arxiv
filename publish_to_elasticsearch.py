@@ -102,7 +102,7 @@ def populateCategories():
 
 def populateElasticSearch():
     data = []
-    for researchItem in ResearchCorpus(filterCategory=filter):
+    for researchItem in ResearchCorpus(filterCategory=filterCategory):
         doc2vec_vector = model.infer_vector(researchItem['tokens'])
         mydict = {
             'id': researchItem['id'],
