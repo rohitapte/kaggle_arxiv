@@ -2,7 +2,7 @@ import json
 import gensim
 from nltk import word_tokenize
 from data_utilities import clean_text, DATA_DIR
-
+from globals import vector_size,min_count,filterCategory
 
 class GensimResearchCorpus(object):
     def __init__(self, tokens_only=False, filterCategory=None):
@@ -56,9 +56,6 @@ class ResearchCorpus(object):
                 yield data
 
 if __name__=='__main__':
-    vector_size=200
-    min_count=10
-    filterCategory = None
     model = gensim.models.doc2vec.Doc2Vec(workers=8,
                                           vector_size=vector_size,
                                           min_count=min_count,
