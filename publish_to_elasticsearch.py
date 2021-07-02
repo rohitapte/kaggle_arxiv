@@ -5,7 +5,7 @@ import gensim
 from elasticsearch import Elasticsearch
 from elasticsearch.helpers import bulk
 from globals import es_host, es_port, gensim_model,gensim_model_dims, filterCategory
-
+from data_utilities import get_all_categories
 
 es = Elasticsearch([{
     'host':es_host,
@@ -90,6 +90,16 @@ def createIndices():
     response = requests.request("PUT", url, headers=headers, data=payload)
     print(response.text)
 
+def populateCategories():
+    categorycounts = get_all_categories()
+    data = []
+    for item in categorycounts:
+        mydict = {
+            'categoryname': item,
+        }
+        data.append(mydict)
+    bulk(es, data, index="uniquecategories")
+
 def populateElasticSearch():
     data = []
     for researchItem in ResearchCorpus(filterCategory=filter):
@@ -115,3 +125,5 @@ def populateElasticSearch():
 if __name__=='__main__':
     deleteIndices()
     createIndices()
+    populateCategories()
+    populateElasticSearch()
