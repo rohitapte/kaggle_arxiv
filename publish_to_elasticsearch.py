@@ -14,17 +14,17 @@ es = Elasticsearch([{
 model = gensim.models.doc2vec.Doc2Vec.load(gensim_model)
 
 def deleteIndices():
-    url="http://"+es_host+":"+es_port+"/uniquecategories"
+    url="http://"+es_host+":"+str(es_port)+"/uniquecategories"
     payload = {}
     headers = {}
     response = requests.request("DELETE", url, headers=headers, data=payload)
     print(response.text)
-    url="http://"+es_host+":"+es_port+"/arxiv"
+    url="http://"+es_host+":"+str(es_port)+"/arxiv"
     response = requests.request("DELETE", url, headers=headers, data=payload)
     print(response.text)
 
 def createIndices():
-    url = "http://" + es_host + ":" + es_port + "/uniquecategories"
+    url = "http://" + es_host + ":" + str(es_port) + "/uniquecategories"
     payload = json.dumps({
         "settings": {
             "number_of_shards": 1
@@ -43,7 +43,7 @@ def createIndices():
     response = requests.request("PUT", url, headers=headers, data=payload)
     print(response.text)
 
-    url = "http://" + es_host + ":" + es_port + "/arxiv"
+    url = "http://" + es_host + ":" + str(es_port) + "/arxiv"
     payload = json.dumps({
         "settings": {
             "number_of_shards": 1
